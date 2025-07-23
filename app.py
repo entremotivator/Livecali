@@ -10,7 +10,7 @@ import tempfile
 import signal
 
 # VAPI Python Features Configuration
-VAPI_API_KEY = "be55f3ed-dde7-4cc1-8ac4-be6d1efd30bc"
+VAPI_API_KEY = "e55f3ed-dde7-4cc1-8ac4-be30bc"
 
 # Comprehensive Agent Configurations with VAPI Features
 VAPI_AGENTS = {
