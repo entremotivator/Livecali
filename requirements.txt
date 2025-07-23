@@ -1,5 +1,5 @@
-pandas
-numpy
-requests
-WeasyPrint
-vapi_python
+streamlit>=1.28.0
+vapi-python>=1.0.0
+python-dotenv>=1.0.0
+pathlib>=1.0.21
+typing-extensions>=4.0.0
