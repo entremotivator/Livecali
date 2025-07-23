@@ -1,0 +1,5 @@
+pandas
+numpy
+request
+WeasyPrint
+vapi_python
