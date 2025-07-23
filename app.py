@@ -8,183 +8,149 @@ import threading
 from datetime import datetime
 import tempfile
 import signal
+import sounddevice as sd
+import numpy as np
 
-# VAPI Python Features Configuration
-VAPI_API_KEY = "e55f3ed-dde7-4cc1-8ac4-be30bc"
+# VAPI Python Features Configuration with SoundDevice
+VAPI_API_KEY = "be55f3ed-dde7-4cc1-8ac4-be6d1efd30bc"
 
-# Comprehensive Agent Configurations with VAPI Features
+# Comprehensive Agent Configurations with Audio Features
 VAPI_AGENTS = {
     "ad6c5243-9548-4231-9d04-b99c1628cc62": {
         "name": "Main Assistant",
         "type": "Customer Support",
         "voice": "jennifer",
         "language": "en-US",
-        "features": ["transcription", "recording", "interruption_sensitivity"]
+        "features": ["transcription", "recording", "interruption_sensitivity", "audio_monitoring"]
     },
     "bf161516-6d88-490c-972e-274098a6b51a": {
         "name": "Agent CEO", 
         "type": "Executive Assistant",
         "voice": "mark",
         "language": "en-US",
-        "features": ["sentiment_analysis", "call_summary", "lead_scoring"]
+        "features": ["sentiment_analysis", "call_summary", "lead_scoring", "audio_quality"]
     },
     "4fe7083e-2f28-4502-b6bf-4ae6ea71a8f4": {
         "name": "Agent Mindset",
         "type": "Life Coach",
         "voice": "sarah",
         "language": "en-US", 
-        "features": ["emotion_detection", "conversation_flow", "personalization"]
+        "features": ["emotion_detection", "conversation_flow", "personalization", "voice_analysis"]
     },
     "f8ef1ad5-5281-42f1-ae69-f94ff7acb453": {
         "name": "Agent Blogger",
         "type": "Content Creator",
         "voice": "alex",
         "language": "en-US",
-        "features": ["content_generation", "topic_extraction", "keyword_analysis"]
+        "features": ["content_generation", "topic_extraction", "keyword_analysis", "audio_recording"]
     },
     "7673e69d-170b-4319-bdf4-e74e5370e98a": {
         "name": "Agent Grant",
         "type": "Grant Writer",
         "voice": "michael",
         "language": "en-US",
-        "features": ["document_analysis", "compliance_check", "funding_match"]
+        "features": ["document_analysis", "compliance_check", "funding_match", "voice_notes"]
     },
     "339cdad6-9989-4bb6-98ed-bd15521707d1": {
         "name": "Agent Prayer AI",
         "type": "Spiritual Guide",
         "voice": "grace",
         "language": "en-US",
-        "features": ["empathy_mode", "cultural_sensitivity", "meditation_guide"]
+        "features": ["empathy_mode", "cultural_sensitivity", "meditation_guide", "ambient_audio"]
     },
     "4820eab2-adaf-4f17-a8a0-30cab3e3f007": {
         "name": "Agent Metrics",
         "type": "Analytics Expert",
         "voice": "david",
         "language": "en-US",
-        "features": ["data_visualization", "trend_analysis", "kpi_tracking"]
+        "features": ["data_visualization", "trend_analysis", "kpi_tracking", "audio_analytics"]
     },
     "f05c182f-d3d1-4a17-9c79-52442a9171b8": {
         "name": "Agent Researcher",
         "type": "Research Assistant",
         "voice": "emma",
         "language": "en-US",
-        "features": ["fact_checking", "source_validation", "research_synthesis"]
+        "features": ["fact_checking", "source_validation", "research_synthesis", "interview_recording"]
     },
     "1008771d-86ca-472a-a125-7a7e10100297": {
         "name": "Agent Investor",
         "type": "Investment Advisor",
         "voice": "robert",
         "language": "en-US",
-        "features": ["market_analysis", "risk_assessment", "portfolio_optimization"]
+        "features": ["market_analysis", "risk_assessment", "portfolio_optimization", "call_recording"]
     },
     "76f1d6e5-cab4-45b8-9aeb-d3e6f3c0c019": {
         "name": "Agent Newsroom",
         "type": "News Reporter",
         "voice": "jessica",
         "language": "en-US",
-        "features": ["breaking_news", "fact_verification", "interview_mode"]
+        "features": ["breaking_news", "fact_verification", "interview_mode", "broadcast_quality"]
     },
     "538258da-0dda-473d-8ef8-5427251f3ad5": {
         "name": "STREAMLIT Agent",
         "type": "Tech Support",
         "voice": "chris",
         "language": "en-US",
-        "features": ["code_assistance", "debugging_help", "framework_guidance"]
+        "features": ["code_assistance", "debugging_help", "framework_guidance", "screen_recording"]
     },
     "14b94e2f-299b-4e75-a445-a4f5feacc522": {
         "name": "HTML/CSS Agent",
         "type": "Web Developer",
         "voice": "taylor",
         "language": "en-US",
-        "features": ["code_review", "design_feedback", "accessibility_check"]
+        "features": ["code_review", "design_feedback", "accessibility_check", "demo_recording"]
     },
     "87d59105-723b-427e-a18d-da99fbf28608": {
         "name": "Business Plan Agent",
         "type": "Business Consultant",
         "voice": "patricia",
         "language": "en-US",
-        "features": ["market_research", "financial_modeling", "strategy_planning"]
+        "features": ["market_research", "financial_modeling", "strategy_planning", "presentation_audio"]
     },
     "04b80e02-9615-4c06-9424-93b4b1e2cdc9": {
         "name": "Ecom Agent",
         "type": "E-commerce Expert",
         "voice": "kevin",
         "language": "en-US",
-        "features": ["product_recommendations", "sales_optimization", "customer_journey"]
+        "features": ["product_recommendations", "sales_optimization", "customer_journey", "sales_calls"]
     },
     "7b2b8b86-5caa-4f28-8c6b-e7d3d0404f06": {
         "name": "Agent Health",
         "type": "Health Assistant",
         "voice": "maria",
         "language": "en-US",
-        "features": ["symptom_analysis", "appointment_scheduling", "health_tracking"]
+        "features": ["symptom_analysis", "appointment_scheduling", "health_tracking", "consultation_recording"]
     },
     "232f3d9c-18b3-4963-bdd9-e7de3be156ae": {
         "name": "Cinch Closer",
         "type": "Sales Closer",
         "voice": "anthony",
         "language": "en-US",
-        "features": ["objection_handling", "closing_techniques", "deal_scoring"]
+        "features": ["objection_handling", "closing_techniques", "deal_scoring", "sales_recording"]
     },
     "41fe59e1-829f-4936-8ee5-eef2bb1287fe": {
         "name": "DISC Agent",
         "type": "Personality Assessor",
         "voice": "linda",
         "language": "en-US",
-        "features": ["personality_analysis", "communication_style", "team_dynamics"]
+        "features": ["personality_analysis", "communication_style", "team_dynamics", "assessment_audio"]
     }
 }
 
-# VAPI Python Features
-VAPI_FEATURES = {
-    "Call Management": {
-        "start": "Start voice calls with assistants",
-        "stop": "Stop active calls",
-        "pause": "Pause ongoing conversations",
-        "resume": "Resume paused calls",
-        "transfer": "Transfer calls between assistants"
-    },
-    "Voice Configuration": {
-        "voice_selection": "Choose from multiple voice options",
-        "speech_rate": "Adjust speaking speed",
-        "pitch_control": "Modify voice pitch",
-        "volume_control": "Set audio levels",
-        "language_support": "Multi-language capabilities"
-    },
-    "Real-time Features": {
-        "live_transcription": "Real-time speech-to-text",
-        "sentiment_analysis": "Emotion detection during calls",
-        "interruption_handling": "Smart conversation flow",
-        "background_noise": "Noise cancellation",
-        "echo_cancellation": "Audio quality enhancement"
-    },
-    "Analytics & Monitoring": {
-        "call_analytics": "Detailed call metrics",
-        "conversation_insights": "AI-powered analysis",
-        "performance_tracking": "Assistant effectiveness",
-        "usage_statistics": "API usage monitoring",
-        "cost_tracking": "Call cost analysis"
-    },
-    "Integration Features": {
-        "webhook_support": "Real-time event notifications",
-        "custom_functions": "Execute custom code during calls",
-        "crm_integration": "Connect with CRM systems",
-        "calendar_sync": "Schedule and manage appointments",
-        "database_queries": "Access external data sources"
-    },
-    "Advanced Capabilities": {
-        "multi_turn_conversations": "Context-aware dialogues",
-        "function_calling": "Execute specific actions",
-        "knowledge_base": "Access custom information",
-        "conversation_memory": "Remember previous interactions",
-        "dynamic_responses": "Adaptive conversation flow"
-    }
+# Audio Configuration with SoundDevice
+AUDIO_SETTINGS = {
+    "sample_rate": 44100,
+    "channels": 2,
+    "dtype": np.float32,
+    "blocksize": 1024,
+    "device": None,  # Use default device
+    "latency": "low"
 }
 
 # Page Configuration
 st.set_page_config(
-    page_title="VAPI Python Features Demo",
-    page_icon="🤖",
+    page_title="VAPI SoundDevice Integration",
+    page_icon="🎙️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -192,7 +158,14 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
-.feature-card {
+.audio-card {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    padding: 1rem;
+    border-radius: 10px;
+    color: white;
+    margin: 0.5rem 0;
+}
+.vapi-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 1rem;
     border-radius: 10px;
@@ -205,19 +178,26 @@ st.markdown("""
     border-radius: 8px;
     border-left: 4px solid #007bff;
 }
-.agent-card {
-    background: #ffffff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 0.5rem 0;
+.status-active {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+.status-inactive {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 0.5rem;
+    border-radius: 5px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # Title and Header
-st.title("🤖 VAPI Python Features Demo")
-st.markdown("### Comprehensive Streamlit Interface for VAPI Python Library")
+st.title("🎙️ VAPI + SoundDevice Integration")
+st.markdown("### Advanced Audio Processing with VAPI Python Library")
 
 # Initialize Session State
 def initialize_session_state():
@@ -228,18 +208,23 @@ def initialize_session_state():
         "current_process": None,
         "selected_agent": None,
         "call_logs": [],
-        "call_analytics": {},
+        "audio_recording": False,
+        "audio_data": [],
+        "audio_stream": None,
         "voice_settings": {
             "voice": "jennifer",
             "speed": 1.0,
             "pitch": 1.0,
             "volume": 0.8
         },
+        "audio_settings": AUDIO_SETTINGS.copy(),
         "advanced_features": {
             "transcription": True,
             "sentiment_analysis": False,
             "interruption_sensitivity": 0.5,
-            "background_noise_reduction": True
+            "background_noise_reduction": True,
+            "audio_monitoring": True,
+            "real_time_processing": False
         }
     }
     
@@ -249,8 +234,69 @@ def initialize_session_state():
 
 initialize_session_state()
 
-# Create VAPI Caller Script with Enhanced Features
-def create_enhanced_vapi_script():
+# Audio Device Management with SoundDevice
+def get_audio_devices():
+    """Get available audio devices using sounddevice"""
+    try:
+        devices = sd.query_devices()
+        input_devices = []
+        output_devices = []
+        
+        for i, device in enumerate(devices):
+            if device['max_input_channels'] > 0:
+                input_devices.append((i, device['name']))
+            if device['max_output_channels'] > 0:
+                output_devices.append((i, device['name']))
+        
+        return input_devices, output_devices
+    except Exception as e:
+        st.error(f"Error querying audio devices: {e}")
+        return [], []
+
+def audio_callback(indata, frames, time, status):
+    """Audio callback function for real-time processing"""
+    if status:
+        st.warning(f"Audio callback status: {status}")
+    
+    if st.session_state.audio_recording:
+        # Store audio data for processing
+        st.session_state.audio_data.append(indata.copy())
+        
+        # Real-time audio level monitoring
+        volume_norm = np.linalg.norm(indata) * 10
+        if hasattr(st.session_state, 'audio_level'):
+            st.session_state.audio_level = volume_norm
+
+def start_audio_monitoring():
+    """Start audio monitoring with sounddevice"""
+    try:
+        if not st.session_state.audio_stream:
+            st.session_state.audio_stream = sd.InputStream(
+                callback=audio_callback,
+                channels=st.session_state.audio_settings['channels'],
+                samplerate=st.session_state.audio_settings['sample_rate'],
+                blocksize=st.session_state.audio_settings['blocksize'],
+                device=st.session_state.audio_settings['device'],
+                dtype=st.session_state.audio_settings['dtype']
+            )
+            st.session_state.audio_stream.start()
+            return True, "Audio monitoring started"
+    except Exception as e:
+        return False, f"Failed to start audio monitoring: {e}"
+
+def stop_audio_monitoring():
+    """Stop audio monitoring"""
+    try:
+        if st.session_state.audio_stream:
+            st.session_state.audio_stream.stop()
+            st.session_state.audio_stream.close()
+            st.session_state.audio_stream = None
+            return True, "Audio monitoring stopped"
+    except Exception as e:
+        return False, f"Failed to stop audio monitoring: {e}"
+
+# Enhanced VAPI Caller Script with SoundDevice Integration
+def create_vapi_sounddevice_script():
     script_content = '''import sys
 import json
 import time
@@ -258,26 +304,62 @@ from vapi_python import Vapi
 import signal
 import os
 from datetime import datetime
+import sounddevice as sd
+import numpy as np
 
-class EnhancedVapiCaller:
+class VapiSoundDeviceCaller:
     def __init__(self, config):
         self.config = config
         self.vapi = Vapi(api_key=config["api_key"])
         self.call_id = None
         self.start_time = None
+        self.audio_stream = None
         
     def setup_signal_handlers(self):
         def signal_handler(signum, frame):
             print(f"[{datetime.now()}] Call interrupted by user")
-            self.stop_call()
+            self.cleanup()
             sys.exit(0)
         
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
     
+    def setup_audio_monitoring(self):
+        """Setup audio monitoring with sounddevice"""
+        try:
+            def audio_callback(indata, frames, time, status):
+                if status:
+                    print(f"[{datetime.now()}] Audio status: {status}")
+                
+                # Calculate audio level
+                volume_norm = np.linalg.norm(indata) * 10
+                if volume_norm > 0.1:  # Only log significant audio
+                    print(f"[{datetime.now()}] Audio level: {volume_norm:.2f}")
+            
+            audio_config = self.config.get("audio_settings", {})
+            self.audio_stream = sd.InputStream(
+                callback=audio_callback,
+                channels=audio_config.get("channels", 2),
+                samplerate=audio_config.get("sample_rate", 44100),
+                blocksize=audio_config.get("blocksize", 1024),
+                dtype=np.float32
+            )
+            
+            self.audio_stream.start()
+            print(f"[{datetime.now()}] Audio monitoring started")
+            return True
+            
+        except Exception as e:
+            print(f"[{datetime.now()}] Audio setup error: {e}")
+            return False
+    
     def start_call(self):
         try:
-            print(f"[{datetime.now()}] Initializing VAPI with enhanced features...")
+            print(f"[{datetime.now()}] Initializing VAPI with SoundDevice integration...")
+            
+            # Setup audio monitoring if enabled
+            if self.config.get("advanced_features", {}).get("audio_monitoring", False):
+                self.setup_audio_monitoring()
             
             # Enhanced call configuration
             call_config = {
@@ -293,7 +375,7 @@ class EnhancedVapiCaller:
             if "advanced_features" in self.config:
                 call_config["features"] = self.config["advanced_features"]
             
-            print(f"[{datetime.now()}] Starting call with configuration: {json.dumps(call_config, indent=2)}")
+            print(f"[{datetime.now()}] Starting call with enhanced audio processing...")
             
             self.start_time = datetime.now()
             call_response = self.vapi.start(**call_config)
@@ -308,29 +390,41 @@ class EnhancedVapiCaller:
             return False
     
     def monitor_call(self):
-        print(f"[{datetime.now()}] Call monitoring started. Press Ctrl+C to stop.")
+        print(f"[{datetime.now()}] Enhanced call monitoring started with audio processing...")
         
         try:
             while True:
-                # Simulate real-time monitoring
+                # Enhanced monitoring with audio feedback
                 elapsed = datetime.now() - self.start_time if self.start_time else None
                 if elapsed:
                     print(f"[{datetime.now()}] Call duration: {elapsed}")
                 
-                # Add call analytics simulation
+                # Audio quality monitoring
+                if self.audio_stream and self.audio_stream.active:
+                    print(f"[{datetime.now()}] Audio stream active - monitoring quality...")
+                
+                # VAPI call monitoring
                 if hasattr(self, 'call_id') and self.call_id:
-                    print(f"[{datetime.now()}] Monitoring call {self.call_id}...")
+                    print(f"[{datetime.now()}] Monitoring VAPI call {self.call_id}...")
                 
                 time.sleep(5)  # Update every 5 seconds
                 
         except KeyboardInterrupt:
             print(f"[{datetime.now()}] Monitoring interrupted")
-            self.stop_call()
+            self.cleanup()
     
-    def stop_call(self):
+    def cleanup(self):
+        """Cleanup audio and call resources"""
         try:
+            # Stop audio monitoring
+            if self.audio_stream:
+                self.audio_stream.stop()
+                self.audio_stream.close()
+                print(f"[{datetime.now()}] Audio monitoring stopped")
+            
+            # Stop VAPI call
             if self.call_id:
-                print(f"[{datetime.now()}] Stopping call {self.call_id}...")
+                print(f"[{datetime.now()}] Stopping VAPI call {self.call_id}...")
                 self.vapi.stop()
                 
                 if self.start_time:
@@ -338,20 +432,18 @@ class EnhancedVapiCaller:
                     print(f"[{datetime.now()}] Call completed. Duration: {duration}")
                 
                 print(f"[{datetime.now()}] Call stopped successfully")
-            else:
-                print(f"[{datetime.now()}] No active call to stop")
-                
+            
         except Exception as e:
-            print(f"[{datetime.now()}] Error stopping call: {e}")
+            print(f"[{datetime.now()}] Cleanup error: {e}")
 
 def main():
     try:
         if len(sys.argv) != 2:
-            print("Usage: python enhanced_vapi_caller.py <config_json>")
+            print("Usage: python vapi_sounddevice_caller.py <config_json>")
             sys.exit(1)
         
         config = json.loads(sys.argv[1])
-        caller = EnhancedVapiCaller(config)
+        caller = VapiSoundDeviceCaller(config)
         caller.setup_signal_handlers()
         
         if caller.start_call():
@@ -366,26 +458,27 @@ def main():
 if __name__ == "__main__":
     main()'''
     
-    script_path = os.path.join(tempfile.gettempdir(), "enhanced_vapi_caller.py")
+    script_path = os.path.join(tempfile.gettempdir(), "vapi_sounddevice_caller.py")
     with open(script_path, "w") as f:
         f.write(script_content)
     
     return script_path
 
-# Enhanced Call Management Functions
-def start_enhanced_call(agent_id, voice_settings, advanced_features, user_overrides=None):
+# Enhanced Call Management with SoundDevice
+def start_enhanced_vapi_call(agent_id, voice_settings, advanced_features, audio_settings, user_overrides=None):
     try:
         if st.session_state.current_process:
             st.session_state.current_process.terminate()
             st.session_state.current_process = None
         
-        script_path = create_enhanced_vapi_script()
+        script_path = create_vapi_sounddevice_script()
         
         config = {
             "api_key": VAPI_API_KEY,
             "assistant_id": agent_id,
             "voice_settings": voice_settings,
             "advanced_features": advanced_features,
+            "audio_settings": audio_settings,
             "overrides": user_overrides or {}
         }
         
@@ -404,6 +497,10 @@ def start_enhanced_call(agent_id, voice_settings, advanced_features, user_overri
         st.session_state.call_active = True
         st.session_state.current_call_id = f"call_{int(time.time())}"
         
+        # Start local audio monitoring if enabled
+        if advanced_features.get("audio_monitoring", False):
+            start_audio_monitoring()
+        
         # Add to call history
         st.session_state.call_history.append({
             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -412,17 +509,23 @@ def start_enhanced_call(agent_id, voice_settings, advanced_features, user_overri
             'status': 'active',
             'process_id': process.pid,
             'features_used': list(advanced_features.keys()),
-            'voice_settings': voice_settings
+            'voice_settings': voice_settings,
+            'audio_settings': audio_settings
         })
         
-        return True, f"Enhanced call started (PID: {process.pid})"
+        return True, f"Enhanced VAPI call with SoundDevice started (PID: {process.pid})"
         
     except Exception as e:
         st.session_state.call_active = False
         return False, f"Failed to start call: {str(e)}"
 
-def stop_enhanced_call():
+def stop_enhanced_vapi_call():
     try:
+        # Stop audio monitoring
+        if st.session_state.audio_stream:
+            stop_audio_monitoring()
+        
+        # Stop VAPI process
         if st.session_state.current_process:
             st.session_state.current_process.terminate()
             
@@ -436,56 +539,71 @@ def stop_enhanced_call():
         
         st.session_state.call_active = False
         st.session_state.current_call_id = None
+        st.session_state.audio_recording = False
         
         # Update call history
         if st.session_state.call_history:
             st.session_state.call_history[-1]['status'] = 'completed'
         
-        return True, "Call stopped successfully"
+        return True, "VAPI call and audio monitoring stopped successfully"
         
     except Exception as e:
         st.session_state.call_active = False
         st.session_state.current_process = None
         return False, f"Error stopping call: {str(e)}"
 
-# Sidebar - VAPI Configuration
+# Sidebar - Audio & VAPI Configuration
 with st.sidebar:
-    st.header("🔧 VAPI Configuration")
+    st.header("🎙️ Audio & VAPI Config")
     
     # API Key Display
-    st.text_input("API Key", value=VAPI_API_KEY[:8] + "...", disabled=True, type="password")
+    st.text_input("VAPI API Key", value=VAPI_API_KEY[:8] + "...", disabled=True, type="password")
+    
+    # Audio Device Selection
+    st.subheader("🔊 Audio Devices")
+    input_devices, output_devices = get_audio_devices()
+    
+    if input_devices:
+        selected_input = st.selectbox(
+            "Input Device",
+            options=[dev[0] for dev in input_devices],
+            format_func=lambda x: next(dev[1] for dev in input_devices if dev[0] == x),
+            key="input_device"
+        )
+        st.session_state.audio_settings["device"] = selected_input
     
     # Call Status
-    st.subheader("📊 Call Status")
-    status_color = "🟢" if st.session_state.call_active else "🔴"
-    st.write(f"{status_color} **Active:** {st.session_state.call_active}")
-    st.write(f"📞 **Total Calls:** {len(st.session_state.call_history)}")
+    st.subheader("📊 Status")
+    if st.session_state.call_active:
+        st.markdown('<div class="status-active">🟢 VAPI Call Active</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="status-inactive">🔴 No Active Call</div>', unsafe_allow_html=True)
     
-    if st.session_state.current_call_id:
-        st.write(f"🆔 **Call ID:** {st.session_state.current_call_id}")
+    if st.session_state.audio_stream:
+        st.markdown('<div class="status-active">🎙️ Audio Monitoring Active</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="status-inactive">🎙️ Audio Monitoring Inactive</div>', unsafe_allow_html=True)
+    
+    st.write(f"📞 **Total Calls:** {len(st.session_state.call_history)}")
     
     # Quick Actions
     st.subheader("⚡ Quick Actions")
-    if st.button("🔄 Refresh Status", use_container_width=True):
+    if st.button("🔄 Refresh Audio Devices", use_container_width=True):
         st.rerun()
     
-    if st.button("🛑 Emergency Stop", use_container_width=True):
-        if st.session_state.current_process:
-            try:
-                st.session_state.current_process.kill()
-                st.session_state.call_active = False
-                st.session_state.current_process = None
-                st.success("Emergency stop executed")
-            except Exception as e:
-                st.error(f"Error: {e}")
+    if st.button("🛑 Emergency Stop All", use_container_width=True):
+        stop_enhanced_vapi_call()
+        st.success("Emergency stop executed")
+        st.rerun()
 
 # Main Content Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🤖 Agent Selection", 
-    "🎙️ Voice Settings", 
-    "⚡ Advanced Features", 
+    "🎙️ Audio Settings", 
+    "🔧 VAPI Features", 
     "📞 Call Management", 
-    "📊 Analytics & History"
+    "📊 Live Monitoring",
+    "📈 Analytics"
 ])
 
 # Tab 1: Agent Selection
@@ -513,7 +631,7 @@ with tab1:
         
         with col1:
             st.markdown(f"""
-            <div class="agent-card">
+            <div class="vapi-card">
                 <h4>🤖 {agent_config['name']}</h4>
                 <p><strong>Type:</strong> {agent_config['type']}</p>
                 <p><strong>Voice:</strong> {agent_config['voice']}</p>
@@ -522,36 +640,49 @@ with tab1:
             """, unsafe_allow_html=True)
         
         with col2:
-            st.markdown("**🚀 Available Features:**")
+            st.markdown("**🚀 Audio-Enhanced Features:**")
             for feature in agent_config['features']:
-                st.write(f"• {feature.replace('_', ' ').title()}")
-        
-        st.code(f"Agent ID: {selected_agent_id}", language="text")
+                icon = "🎙️" if "audio" in feature else "🔧"
+                st.write(f"{icon} {feature.replace('_', ' ').title()}")
 
-# Tab 2: Voice Settings
+# Tab 2: Audio Settings
 with tab2:
-    st.subheader("🎙️ Voice Configuration")
+    st.subheader("🎙️ SoundDevice Audio Configuration")
     
     col1, col2 = st.columns(2)
     
     with col1:
+        st.markdown("**🔊 Audio Parameters**")
+        st.session_state.audio_settings["sample_rate"] = st.selectbox(
+            "Sample Rate (Hz)",
+            [22050, 44100, 48000, 96000],
+            index=1
+        )
+        
+        st.session_state.audio_settings["channels"] = st.selectbox(
+            "Channels",
+            [1, 2],
+            index=1
+        )
+        
+        st.session_state.audio_settings["blocksize"] = st.slider(
+            "Block Size",
+            min_value=256,
+            max_value=4096,
+            value=1024,
+            step=256
+        )
+    
+    with col2:
+        st.markdown("**🎚️ Voice Settings**")
         st.session_state.voice_settings["voice"] = st.selectbox(
-            "Voice Selection",
+            "VAPI Voice",
             ["jennifer", "mark", "sarah", "alex", "michael", "grace", "david", "emma"],
             index=0
         )
         
         st.session_state.voice_settings["speed"] = st.slider(
             "Speech Rate",
-            min_value=0.5,
-            max_value=2.0,
-            value=1.0,
-            step=0.1
-        )
-    
-    with col2:
-        st.session_state.voice_settings["pitch"] = st.slider(
-            "Voice Pitch",
             min_value=0.5,
             max_value=2.0,
             value=1.0,
@@ -566,13 +697,39 @@ with tab2:
             step=0.1
         )
     
-    # Voice Settings Preview
-    st.subheader("🔊 Current Voice Settings")
-    st.json(st.session_state.voice_settings)
+    # Audio Test
+    st.subheader("🎵 Audio Test")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("🎙️ Test Microphone", use_container_width=True):
+            success, message = start_audio_monitoring()
+            if success:
+                st.success(message)
+                st.session_state.audio_recording = True
+            else:
+                st.error(message)
+    
+    with col2:
+        if st.button("⏹️ Stop Test", use_container_width=True):
+            success, message = stop_audio_monitoring()
+            if success:
+                st.success(message)
+                st.session_state.audio_recording = False
+            else:
+                st.error(message)
+    
+    with col3:
+        if st.button("📊 Audio Info", use_container_width=True):
+            try:
+                st.info(f"Default device: {sd.default.device}")
+                st.info(f"Sample rate: {sd.default.samplerate}")
+            except Exception as e:
+                st.error(f"Error getting audio info: {e}")
 
-# Tab 3: Advanced Features
+# Tab 3: VAPI Features
 with tab3:
-    st.subheader("⚡ Advanced VAPI Features")
+    st.subheader("🔧 Advanced VAPI Features")
     
     col1, col2 = st.columns(2)
     
@@ -584,12 +741,15 @@ with tab3:
         st.session_state.advanced_features["sentiment_analysis"] = st.checkbox(
             "Sentiment Analysis", value=False
         )
-        st.session_state.advanced_features["background_noise_reduction"] = st.checkbox(
-            "Noise Reduction", value=True
+        st.session_state.advanced_features["audio_monitoring"] = st.checkbox(
+            "Audio Monitoring", value=True
+        )
+        st.session_state.advanced_features["real_time_processing"] = st.checkbox(
+            "Real-time Audio Processing", value=False
         )
     
     with col2:
-        st.markdown("**🎛️ Conversation Control**")
+        st.markdown("**🎛️ Audio Control**")
         st.session_state.advanced_features["interruption_sensitivity"] = st.slider(
             "Interruption Sensitivity",
             min_value=0.0,
@@ -598,25 +758,13 @@ with tab3:
             step=0.1
         )
         
-        st.session_state.advanced_features["response_delay"] = st.slider(
-            "Response Delay (ms)",
-            min_value=0,
-            max_value=2000,
-            value=500,
-            step=100
+        st.session_state.advanced_features["background_noise_reduction"] = st.checkbox(
+            "Noise Reduction", value=True
         )
-    
-    # Feature Categories
-    st.subheader("📋 Available Feature Categories")
-    
-    for category, features in VAPI_FEATURES.items():
-        with st.expander(f"🔧 {category}"):
-            for feature, description in features.items():
-                st.write(f"**{feature.replace('_', ' ').title()}:** {description}")
 
 # Tab 4: Call Management
 with tab4:
-    st.subheader("📞 Call Management Center")
+    st.subheader("📞 Enhanced Call Management")
     
     # User Information
     st.markdown("**👤 User Information**")
@@ -630,13 +778,13 @@ with tab4:
         user_email = st.text_input("Email", placeholder="your@email.com")
         user_company = st.text_input("Company", placeholder="Your Company")
     
-    # Call Controls
-    st.markdown("**🎮 Call Controls**")
+    # Enhanced Call Controls
+    st.markdown("**🎮 Enhanced Call Controls**")
     
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("📞 Start Enhanced Call", disabled=st.session_state.call_active, use_container_width=True):
+        if st.button("📞 Start VAPI + Audio", disabled=st.session_state.call_active, use_container_width=True):
             if st.session_state.selected_agent:
                 user_overrides = {}
                 if user_name:
@@ -649,10 +797,11 @@ with tab4:
                 
                 st.session_state.call_logs = []
                 
-                success, message = start_enhanced_call(
+                success, message = start_enhanced_vapi_call(
                     st.session_state.selected_agent,
                     st.session_state.voice_settings,
                     st.session_state.advanced_features,
+                    st.session_state.audio_settings,
                     user_overrides
                 )
                 
@@ -667,8 +816,8 @@ with tab4:
                 st.warning("Please select an agent first")
     
     with col2:
-        if st.button("⏹️ Stop Call", disabled=not st.session_state.call_active, use_container_width=True):
-            success, message = stop_enhanced_call()
+        if st.button("⏹️ Stop All", disabled=not st.session_state.call_active, use_container_width=True):
+            success, message = stop_enhanced_vapi_call()
             if success:
                 st.success(f"✅ {message}")
                 time.sleep(1)
@@ -677,27 +826,57 @@ with tab4:
                 st.error(f"❌ {message}")
     
     with col3:
-        if st.button("⏸️ Pause Call", disabled=not st.session_state.call_active, use_container_width=True):
-            st.info("Pause functionality - Feature coming soon")
+        if st.button("🎙️ Audio Only", disabled=st.session_state.audio_stream is not None, use_container_width=True):
+            success, message = start_audio_monitoring()
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
     
     with col4:
-        if st.button("🔄 Resume Call", disabled=st.session_state.call_active, use_container_width=True):
-            st.info("Resume functionality - Feature coming soon")
-    
-    # Current Call Status
-    if st.session_state.call_active:
-        st.success("🟢 **Call is currently active with enhanced features**")
-        if st.session_state.current_process:
-            st.info(f"Process ID: {st.session_state.current_process.pid}")
-    else:
-        st.info("⚫ **No active call**")
+        if st.button("📊 Status Check", use_container_width=True):
+            st.info(f"VAPI: {'Active' if st.session_state.call_active else 'Inactive'}")
+            st.info(f"Audio: {'Active' if st.session_state.audio_stream else 'Inactive'}")
 
-# Tab 5: Analytics & History
+# Tab 5: Live Monitoring
 with tab5:
-    st.subheader("📊 Call Analytics & History")
+    st.subheader("📊 Live Audio & Call Monitoring")
     
-    # Call Statistics
+    if st.session_state.call_active or st.session_state.audio_stream:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**🎙️ Audio Status**")
+            if hasattr(st.session_state, 'audio_level'):
+                st.progress(min(st.session_state.audio_level / 10, 1.0))
+                st.write(f"Audio Level: {st.session_state.audio_level:.2f}")
+            else:
+                st.write("No audio data available")
+        
+        with col2:
+            st.markdown("**📞 Call Status**")
+            if st.session_state.current_call_id:
+                st.write(f"Call ID: {st.session_state.current_call_id}")
+                st.write(f"Process: {st.session_state.current_process.pid if st.session_state.current_process else 'N/A'}")
+            else:
+                st.write("No active call")
+        
+        # Live Logs
+        st.subheader("📝 Live Logs")
+        if st.session_state.call_logs:
+            for log in st.session_state.call_logs[-10:]:
+                st.text(log)
+        else:
+            st.info("No logs available yet...")
+    else:
+        st.info("Start a call or audio monitoring to see live data")
+
+# Tab 6: Analytics
+with tab6:
+    st.subheader("📈 Call & Audio Analytics")
+    
     if st.session_state.call_history:
+        # Statistics
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -712,7 +891,7 @@ with tab5:
             active_calls = len([c for c in st.session_state.call_history if c['status'] == 'active'])
             st.markdown(f"""
             <div class="metric-card">
-                <h4>🟢 Active Calls</h4>
+                <h4>🟢 Active</h4>
                 <h2>{active_calls}</h2>
             </div>
             """, unsafe_allow_html=True)
@@ -727,56 +906,64 @@ with tab5:
             """, unsafe_allow_html=True)
         
         with col4:
-            # Most used agent
-            agent_usage = {}
-            for call in st.session_state.call_history:
-                agent_name = call.get('agent_name', 'Unknown')
-                agent_usage[agent_name] = agent_usage.get(agent_name, 0) + 1
-            
-            most_used = max(agent_usage.items(), key=lambda x: x[1])[0] if agent_usage else "None"
+            audio_enabled_calls = len([c for c in st.session_state.call_history 
+                                     if c.get('audio_settings', {}).get('sample_rate')])
             st.markdown(f"""
             <div class="metric-card">
-                <h4>🏆 Top Agent</h4>
-                <h3>{most_used}</h3>
+                <h4>🎙️ Audio Enhanced</h4>
+                <h2>{audio_enabled_calls}</h2>
             </div>
             """, unsafe_allow_html=True)
-    
-    # Call History Table
-    st.subheader("📋 Recent Call History")
-    
-    if st.session_state.call_history:
-        for i, call in enumerate(reversed(st.session_state.call_history[-10:])):
-            status_icon = {"active": "🟢", "completed": "✅", "failed": "❌"}.get(call['status'], "❓")
-            
-            with st.expander(f"{status_icon} {call['timestamp']} - {call['agent_name']} ({call['status']})"):
+        
+        # Call History
+        st.subheader("📋 Enhanced Call History")
+        for call in reversed(st.session_state.call_history[-5:]):
+            with st.expander(f"📞 {call['timestamp']} - {call['agent_name']} ({call['status']})"):
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.write(f"**Agent ID:** {call['agent_id']}")
-                    st.write(f"**Process ID:** {call.get('process_id', 'N/A')}")
+                    st.write(f"**Agent:** {call['agent_name']}")
                     st.write(f"**Status:** {call['status']}")
+                    st.write(f"**Process ID:** {call.get('process_id', 'N/A')}")
                 
                 with col2:
-                    st.write(f"**Features Used:** {', '.join(call.get('features_used', []))}")
-                    if 'voice_settings' in call:
-                        st.write(f"**Voice:** {call['voice_settings'].get('voice', 'N/A')}")
-                        st.write(f"**Speed:** {call['voice_settings'].get('speed', 'N/A')}")
+                    if 'audio_settings' in call:
+                        st.write(f"**Sample Rate:** {call['audio_settings'].get('sample_rate', 'N/A')} Hz")
+                        st.write(f"**Channels:** {call['audio_settings'].get('channels', 'N/A')}")
+                    st.write(f"**Voice:** {call.get('voice_settings', {}).get('voice', 'N/A')}")
     else:
-        st.info("📭 No call history available yet. Start your first call!")
+        st.info("📭 No call history available yet. Start your first enhanced call!")
 
-# Live Updates
-if st.session_state.call_active:
-    time.sleep(3)
+# Auto-refresh for live updates
+if st.session_state.call_active or st.session_state.audio_stream:
+    time.sleep(2)
     st.rerun()
 
 # Footer
 st.markdown("---")
 st.markdown("""
-### 🚀 VAPI Python Features Demonstrated:
-- **Enhanced Call Management** with real-time monitoring
-- **Advanced Voice Configuration** with multiple settings
-- **Real-time Features** including transcription and sentiment analysis
-- **Process Isolation** for stable call handling
-- **Comprehensive Analytics** and call history tracking
-- **Multi-agent Support** with specialized capabilities
+### 🚀 VAPI + SoundDevice Integration Features:
+- **🎙️ SoundDevice Audio Processing** - Professional audio handling without PyAudio issues
+- **📞 Enhanced VAPI Calls** - Full VAPI Python library integration
+- **🔊 Real-time Audio Monitoring** - Live audio level monitoring and processing
+- **🎛️ Advanced Audio Controls** - Sample rate, channels, and device selection
+- **📊 Live Analytics** - Real-time call and audio monitoring
+- **🛡️ Process Isolation** - Stable call handling with audio integration
+""")
+
+# Dependencies Information
+with st.expander("📦 Dependencies & Installation"):
+    st.code("""
+# Required packages (install with pip):
+streamlit
+sounddevice  # Replaces PyAudio - easier installation
+numpy
+vapi_python
+subprocess
+threading
+tempfile
+signal
+
+# Installation command:
+pip install streamlit sounddevice numpy vapi_python
 """)
