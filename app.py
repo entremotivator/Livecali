@@ -263,7 +263,7 @@ if selected_agent:
             st.success(f"Call started with PID {pid}")
             st.balloons()
             time.sleep(1)
-            st._rerun()
+            st.experimental_rerun()
 
     with col2:
         disabled = not st.session_state.call_active
@@ -271,7 +271,7 @@ if selected_agent:
             stop_call()
             st.success("Call stopped")
             time.sleep(1)
-            st._rerun()
+            st.experimental_rerun()
 
     with col3:
         if st.button("🔄 Check Status"):
@@ -289,7 +289,7 @@ if selected_agent:
 # Auto refresh live logs if call active
 if st.session_state.call_active:
     time.sleep(2)
-    st.rerun()
+    st.experimental_rerun()
 
 # Footer
 st.markdown("---")
@@ -301,4 +301,3 @@ st.markdown("""
 - Live monitoring with real-time logs.
 - Supports multiple calls without restarting the app.
 """)
-
